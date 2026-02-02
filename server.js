@@ -1,27 +1,29 @@
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
+const http = require("http");
 const cors = require("cors");
+const connectDB = require("./config/db");
 const sensorRoutes = require("./routes/sensorRoutes");
+const initSocket = require("./sockets/socketHandler");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use("/api", sensorRoutes);
+app.use("/api/sensor", sensorRoutes);
 
+// Health check
 app.get("/", (req, res) => {
-  res.send("Cardiac Backend API is running");
+  res.send("✅ Cardiac Health Backend Running");
 });
 
-// MongoDB connection (v7+)
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.error("MongoDB connection error:", err));
+const server = http.createServer(app);
 
-// Start server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// DB + Socket
+connectDB();
+initSocket(server);
+
+server.listen(process.env.PORT || 5000, () => {
+  console.log("🚀 Server running on port 5000");
+});
